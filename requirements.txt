@@ -1,0 +1,7 @@
+kivy==2.3.0
+kivymd==1.2.0
+routeros-api==0.17.0
+paramiko==3.4.0
+requests==2.31.0
+llama-cpp-python==0.2.90
+cryptography==42.0.0
