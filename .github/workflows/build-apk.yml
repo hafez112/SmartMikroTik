@@ -13,14 +13,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Build APK with Docker (pre-built SDL2)
+    - name: Build APK with Docker
       run: |
         docker run --rm \
           -v $(pwd):/home/user/app \
           -w /home/user/app \
-          -e BUILDOZER_ALLOW_ROOT=1 \
           kivy/buildozer:latest \
-          sh -c "buildozer android debug"
+          sh -c "yes | buildozer android debug"
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
