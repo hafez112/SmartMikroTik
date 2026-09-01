@@ -67,21 +67,18 @@ jobs:
       run: |
         export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
         export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
-        buildozer android debug 2>&1 | tee build.log || true
-        echo "========== LAST 50 LINES =========="
-        tail -n 50 build.log || true
+        buildozer android debug
       timeout-minutes: 90
+    
+    - name: Find APK
+      run: |
+        echo "=== APK Files ==="
+        find . -name "*.apk" -type f 2>/dev/null
+        ls -la bin/ 2>/dev/null || true
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: SmartMikroTik-APK
-        path: bin/*.apk
-    
-    - name: Upload build log on failure
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: build-log
-        path: build.log
+        path: '**/*.apk'
