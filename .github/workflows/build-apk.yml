@@ -23,8 +23,9 @@ jobs:
           ~/.buildozer
           ~/.android
         key: buildozer-${{ hashFiles('buildozer.spec') }}
+        restore-keys: buildozer-
     
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y -qq \
@@ -38,10 +39,26 @@ jobs:
     
     - name: Install Buildozer
       run: |
+        pip install --upgrade pip
         pip install buildozer==1.5.0 cython==0.29.36
     
+    - name: Setup Android SDK
+      run: |
+        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+        mkdir -p $ANDROID_HOME/cmdline-tools
+        cd $ANDROID_HOME/cmdline-tools
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mv cmdline-tools latest
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        yes | sdkmanager --licenses || true
+        sdkmanager "build-tools;33.0.0" "platform-tools" "platforms;android-33" || true
+    
     - name: Build APK
-      run: buildozer android debug
+      run: |
+        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        buildozer android debug
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
