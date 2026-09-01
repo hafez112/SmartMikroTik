@@ -14,6 +14,7 @@ android.minapi = 21
 android.ndk = 25b
 android.archs = arm64-v8a
 android.allow_backup = True
+android.python_version = 3.11
 p4a.local_recipes = 
 
 [buildozer]
