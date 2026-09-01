@@ -1,4 +1,4 @@
-name: Build APK Fast
+name: Build APK
 
 on:
   push:
@@ -8,18 +8,67 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Build APK with Docker
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Add swap (fix memory)
       run: |
-        docker run --rm \
-          -v $(pwd):/home/user/app \
-          -w /home/user/app \
-          kivy/buildozer:latest \
-          sh -c "script -q -c \"buildozer android debug\" /dev/null"
+        sudo swapoff -a 2>/dev/null || true
+        sudo rm -f /swapfile /mnt/swapfile 2>/dev/null || true
+        sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=4096 status=none
+        sudo chmod 600 /mnt/swapfile
+        sudo mkswap /mnt/swapfile
+        sudo swapon /mnt/swapfile
+        free -h
+    
+    - name: Install system deps
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq \
+          git zip unzip openjdk-17-jdk python3-pip \
+          autoconf libtool pkg-config zlib1g-dev \
+          libncurses5-dev libncursesw5-dev libtinfo5 \
+          cmake libffi-dev libssl-dev automake \
+          libltdl-dev \
+          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+          libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+          libfreetype6-dev libgl1-mesa-dev libgles2-mesa-dev \
+          xclip xsel
+    
+    - name: Install Buildozer
+      run: |
+        pip install --upgrade pip
+        pip install buildozer==1.5.0 cython==0.29.36
+    
+    - name: Setup Android SDK
+      run: |
+        SDK_DIR=$HOME/.buildozer/android/platform/android-sdk
+        mkdir -p $SDK_DIR
+        cd $SDK_DIR
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mkdir -p cmdline-tools/latest
+        mv cmdline-tools/bin cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
+        mkdir -p tools/bin
+        cp cmdline-tools/latest/bin/sdkmanager tools/bin/sdkmanager
+        cp -r cmdline-tools/latest/lib tools/lib 2>/dev/null || true
+        export ANDROID_HOME=$SDK_DIR
+        export PATH=$PATH:$SDK_DIR/tools/bin:$SDK_DIR/platform-tools
+        yes | sdkmanager --sdk_root=$SDK_DIR --licenses || true
+        sdkmanager --sdk_root=$SDK_DIR "platform-tools" "platforms;android-33" "build-tools;33.0.0" || true
+    
+    - name: Build APK
+      run: |
+        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
+        buildozer android debug
+      timeout-minutes: 90
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
