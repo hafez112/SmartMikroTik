@@ -17,6 +17,14 @@ jobs:
       with:
         python-version: '3.11'
     
+    - name: Add swap space (8GB)
+      run: |
+        sudo fallocate -l 8G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        free -h
+    
     - name: Install system dependencies
       run: |
         sudo apt-get update -qq
@@ -34,34 +42,23 @@ jobs:
         pip install --upgrade pip
         pip install buildozer==1.5.0 cython==0.29.36
     
-    - name: Setup Android SDK (both paths)
+    - name: Setup Android SDK
       run: |
         export SDK_DIR=~/.buildozer/android/platform/android-sdk
         mkdir -p $SDK_DIR
         cd $SDK_DIR
-        
-        # Download command line tools
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools-linux-9477386_latest.zip
-        
-        # Modern path: cmdline-tools/latest/
         mkdir -p cmdline-tools/latest
         mv cmdline-tools/bin cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
-        
-        # ALSO copy to tools/bin (path Buildozer expects)
         mkdir -p tools/bin
         cp cmdline-tools/latest/bin/sdkmanager tools/bin/sdkmanager
         cp -r cmdline-tools/latest/lib tools/lib 2>/dev/null || true
-        
-        # Accept licenses from both paths
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
         yes | $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
-        
-        # Install packages
         $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" "platforms;android-33" "build-tools;33.0.0" || true
     
-    - name: Build APK
+    - name: Build APK (arm64 only)
       run: |
         export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
         export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
