@@ -34,7 +34,7 @@ jobs:
         pip install --upgrade pip
         pip install buildozer==1.5.0 cython==0.29.36
     
-    - name: Setup Android SDK
+    - name: Setup Android SDK (both paths)
       run: |
         export SDK_DIR=~/.buildozer/android/platform/android-sdk
         mkdir -p $SDK_DIR
@@ -44,21 +44,27 @@ jobs:
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools-linux-9477386_latest.zip
         
-        # Move to correct location: <sdk>/cmdline-tools/latest/
+        # Modern path: cmdline-tools/latest/
         mkdir -p cmdline-tools/latest
         mv cmdline-tools/bin cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
         
-        # Accept licenses with explicit sdk_root
-        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
+        # ALSO copy to tools/bin (path Buildozer expects)
+        mkdir -p tools/bin
+        cp cmdline-tools/latest/bin/sdkmanager tools/bin/sdkmanager
+        cp -r cmdline-tools/latest/lib tools/lib 2>/dev/null || true
         
-        # Install required packages
-        $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR \
+        # Accept licenses from both paths
+        yes | $SDK_DIR/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
+        yes | $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
+        
+        # Install packages
+        $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" "platforms;android-33" "build-tools;33.0.0" || true
     
     - name: Build APK
       run: |
         export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
         buildozer android debug
       timeout-minutes: 90
     
