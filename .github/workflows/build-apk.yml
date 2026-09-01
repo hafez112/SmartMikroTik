@@ -17,12 +17,14 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Add swap space (8GB)
+    - name: Add swap space
       run: |
-        sudo fallocate -l 8G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
+        sudo swapoff -a || true
+        sudo rm -f /swapfile /mnt/swapfile
+        sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=4096
+        sudo chmod 600 /mnt/swapfile
+        sudo mkswap /mnt/swapfile
+        sudo swapon /mnt/swapfile
         free -h
     
     - name: Install system dependencies
@@ -58,7 +60,7 @@ jobs:
         $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR \
           "platform-tools" "platforms;android-33" "build-tools;33.0.0" || true
     
-    - name: Build APK (arm64 only)
+    - name: Build APK
       run: |
         export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
         export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
