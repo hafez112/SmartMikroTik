@@ -18,6 +18,7 @@ jobs:
         docker run --rm \
           -v $(pwd):/home/user/app \
           -w /home/user/app \
+          -e BUILDOZER_ALLOW_ROOT=1 \
           kivy/buildozer:latest \
           sh -c "buildozer android debug"
     
