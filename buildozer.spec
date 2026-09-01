@@ -11,10 +11,10 @@ fullscreen = 0
 android.permissions = INTERNET,ACCESS_NETWORK_STATE,ACCESS_WIFI_STATE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,FOREGROUND_SERVICE
 android.api = 33
 android.minapi = 21
-android.sdk = 33
 android.ndk = 25b
-android.arch = arm64-v8a
+android.archs = arm64-v8a, armeabi-v7a
 android.allow_backup = True
+p4a.local_recipes = 
 icon.filename = %(source.dir)s/assets/icon.png
 presplash.filename = %(source.dir)s/assets/presplash.png
 
