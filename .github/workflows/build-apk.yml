@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 120
     
     steps:
     - uses: actions/checkout@v4
@@ -16,14 +16,6 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    
-    - uses: actions/cache@v4
-      with:
-        path: |
-          ~/.buildozer
-          ~/.android
-        key: buildozer-${{ hashFiles('buildozer.spec') }}
-        restore-keys: buildozer-
     
     - name: Install system dependencies
       run: |
@@ -35,30 +27,17 @@ jobs:
           cmake libffi-dev libssl-dev automake \
           libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
           libsdl2-ttf-dev libgl1-mesa-dev libgles2-mesa-dev \
-          xclip xsel
+          xclip xsel libltdl-dev
     
     - name: Install Buildozer
       run: |
         pip install --upgrade pip
         pip install buildozer==1.5.0 cython==0.29.36
     
-    - name: Setup Android SDK
+    - name: Build APK (auto-download SDK)
       run: |
-        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
-        mkdir -p $ANDROID_HOME/cmdline-tools
-        cd $ANDROID_HOME/cmdline-tools
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-        mv cmdline-tools latest
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-        yes | sdkmanager --licenses || true
-        sdkmanager "build-tools;33.0.0" "platform-tools" "platforms;android-33" || true
-    
-    - name: Build APK
-      run: |
-        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
         buildozer android debug
+      timeout-minutes: 90
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
