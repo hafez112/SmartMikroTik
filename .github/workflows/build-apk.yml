@@ -19,7 +19,7 @@ jobs:
           -v $(pwd):/home/user/app \
           -w /home/user/app \
           kivy/buildozer:latest \
-          sh -c "yes | buildozer android debug"
+          sh -c "script -q -c \"buildozer android debug\" /dev/null"
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
