@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK Fast
 
 on:
   push:
@@ -8,64 +8,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: 60
     
     steps:
     - uses: actions/checkout@v4
     
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Add swap space
+    - name: Build APK with Docker (pre-built SDL2)
       run: |
-        sudo swapoff -a || true
-        sudo rm -f /swapfile /mnt/swapfile
-        sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=4096
-        sudo chmod 600 /mnt/swapfile
-        sudo mkswap /mnt/swapfile
-        sudo swapon /mnt/swapfile
-        free -h
-    
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq \
-          git zip unzip openjdk-17-jdk python3-pip \
-          autoconf libtool pkg-config zlib1g-dev \
-          libncurses5-dev libncursesw5-dev libtinfo5 \
-          cmake libffi-dev libssl-dev automake \
-          libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
-          libsdl2-ttf-dev libgl1-mesa-dev libgles2-mesa-dev \
-          xclip xsel libltdl-dev
-    
-    - name: Install Buildozer
-      run: |
-        pip install --upgrade pip
-        pip install buildozer==1.5.0 cython==0.29.36
-    
-    - name: Setup Android SDK
-      run: |
-        export SDK_DIR=~/.buildozer/android/platform/android-sdk
-        mkdir -p $SDK_DIR
-        cd $SDK_DIR
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools/bin cmdline-tools/lib cmdline-tools/latest/ 2>/dev/null || true
-        mkdir -p tools/bin
-        cp cmdline-tools/latest/bin/sdkmanager tools/bin/sdkmanager
-        cp -r cmdline-tools/latest/lib tools/lib 2>/dev/null || true
-        yes | $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR --licenses || true
-        $SDK_DIR/tools/bin/sdkmanager --sdk_root=$SDK_DIR \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.0" || true
-    
-    - name: Build APK
-      run: |
-        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools
-        buildozer android debug
-      timeout-minutes: 90
+        docker run --rm \
+          -v $(pwd):/home/user/app \
+          -w /home/user/app \
+          kivy/buildozer:latest \
+          sh -c "buildozer android debug"
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
