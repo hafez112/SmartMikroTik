@@ -4,7 +4,7 @@ package.name = smartmikrotik
 package.domain = com.hafez112
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,db,json,txt
-version = 7.0.1
+version = 7.0.2
 requirements = python3,kivy==2.3.0,kivymd==1.2.0,routeros-api,paramiko,requests,pyjnius
 orientation = portrait
 fullscreen = 0
@@ -14,8 +14,8 @@ android.minapi = 21
 android.ndk = 25b
 android.archs = arm64-v8a
 android.allow_backup = True
-# Pin python-for-android to a release before Python 3.14 became the default.
-p4a.branch = 2024.01.21
+# This is the actual python-for-android branch; the bare date is not a branch.
+p4a.branch = release-2024.01.21
 
 [buildozer]
 log_level = 2
