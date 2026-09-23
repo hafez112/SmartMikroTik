@@ -59,11 +59,9 @@ class LocalAIModel:
         if not self.is_loaded or self.model is None:
             return "❌ لا يوجد نموذج محمل"
         try:
-            result = self.model(
-                f"أنت خ��ير MikroTik. أجب بالعربية.\n\nالمستخدم: {prompt}\n\nالرد:",
-                max_tokens=max_tokens, temperature=temperature,
-                stop=["المستخدم:", "Human:"], echo=False,
-            )
+            system_prompt = "أنت خبير MikroTik. أجب بالعربية."
+            full_prompt = f"{system_prompt}\n\nالمستخدم: {prompt}\n\nالرد:"
+            result = self.model(full_prompt, max_tokens=max_tokens, temperature=temperature, stop=["المستخدم:", "Human:"], echo=False)
             return result["choices"][0]["text"].strip()
         except Exception as exc:
             return f"❌ خطأ: {exc}"
